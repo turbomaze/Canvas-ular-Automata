@@ -9,13 +9,19 @@
 
 /**********
  * config */
-var DES_WIDTH = 100;
-var DES_HEIGHT = 100;
-var RULE = 30;
+var d = new Date();
+var coolRules = [30, 57, 60, 73, 89, 90, 102, 105, 110, 124, 126, 150];
+var ruleIdx = Math.floor(
+	map(60*d.getMinutes()+d.getSeconds(), 0, 3599, 0, 314)
+)%coolRules.length; //~314 switches an hour
+
+var RULE = coolRules[ruleIdx];
+var DES_HEIGHT = 87;
+var DES_WIDTH = Math.ceil((screen.width/screen.height)*DES_HEIGHT);
 var INIT_STATE = null;
 var ZERO_COLOR = 255;
-var ONE_COLOR = 0;
-var RECALC_ON_RESIZE = false;
+var ONE_COLOR = 233;
+var VERT_POS = 'top';
 
 /*************
  * constants */
@@ -28,32 +34,36 @@ var ctx;
 /******************
  * work functions */
 function initCanvasular() {
-	///////////////////
-	//event listeners//
-	if (RECALC_ON_RESIZE) {
-		window.addEventListener('resize', function onResize() {
-			canvas.width = document.documentElement.clientWidth; 
-			canvas.height = document.documentElement.clientHeight;
-			updateCanvas(canvas.width, canvas.height);
-		});
-	}
-	
+	var start = new Date().getTime();
+
 	////////////////////
 	//assign variables//
 	canvas = document.createElement('canvas'); //make it
-	canvas.width = document.documentElement.clientWidth; 
-	canvas.height = document.documentElement.clientHeight;
+	canvas.width = 1; 
+	canvas.height = 1;
 	canvas.style.display = 'none'; //hide it from the user
 	document.body.appendChild(canvas); //add it to the body
 	ctx = canvas.getContext('2d'); //get the context
 	
-	//updateCanvas(DES_WIDTH, DES_HEIGHT);
-	updateCanvas(canvas.width, canvas.height);
+	///////////////////
+	//report the rule//
+	if ($('#rule')) {
+		$('#rule').innerHTML = 'Rule ' + RULE;
+	}
+
+	///////////
+	//load up//
+	loadCABackground(DES_WIDTH, DES_HEIGHT);
+
+	console.log(((new Date().getTime())-start),'ms');
 }
 
-function updateCanvas(dw, dh) { //desired width and height of the image
+function loadCABackground(dw, dh) { //desired width and height of the image
 	////////////////
-	//fix the size//
+	//set the size//
+	canvas.width = dw;
+	canvas.height = dh;
+	var scaleAmt = Math.floor((screen.width/dw+screen.height/dh)/2);
 
 	/////////////////////////////
 	//prepare the initial state//
@@ -61,33 +71,45 @@ function updateCanvas(dw, dh) { //desired width and height of the image
 	if (INIT_STATE) {
 		firstRow = centerString(INIT_STATE, dw, '0');
 	} else {
-		firstRow = getRandString('01', dw);
+		firstRow = getRandString('0000100001', dw); //20% 0s, 80% 1s
 	}
 
-	//////////////////////////
-	//compute the new canvas//
+	//////////////////////////////////
+	//generate the cellular automata//
+	var ca = [firstRow];
+	for (var t = 0; t < dh; t++) {
+		if (t !== dh-1) {
+			firstRow = stepCellularAutomata(RULE, firstRow);
+			ca.push(firstRow);
+		}
+	}
+
+	///////////////
+	//draw the CA//
 	var currImageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
 	for (var y = 0; y < canvas.height; y++) {
 		for (var x = 0; x < canvas.width; x++) {
 			var idx = 4*(canvas.width*y + x);
-			var color = (firstRow.charAt(x) === '0') ? ZERO_COLOR : ONE_COLOR; 
-
+			var color = (ca[y].charAt(x) === '0') ? ZERO_COLOR : ONE_COLOR; 
 			currImageData.data[idx+0] = color;
 			currImageData.data[idx+1] = color;
 			currImageData.data[idx+2] = color;
 			currImageData.data[idx+3] = 255;
 		}
-		if (y !== canvas.height-1) {
-			firstRow = stepCellularAutomata(RULE, firstRow);
-		}
 	}
-	ctx.putImageData(currImageData, 0, 0);
+
+	////////////////////////////////////////////////////////////
+	//scale the CA cleanly onto canvas (which must be larger!)//
+	var chunkilyScaledImg = scaleImageData(currImageData, scaleAmt);
+	canvas.width = canvas.width*scaleAmt;
+	canvas.height = canvas.height*scaleAmt;
+	ctx.putImageData(chunkilyScaledImg, 0, 0);
 
 	////////////////////////////////
 	//load it up as the background//
 	var image = canvas.toDataURL();
-	document.body.style.background = '#EFEFEF url('+image+
-		') no-repeat center top fixed';
+	document.body.style.background = 'url('+image+
+		') no-repeat center '+VERT_POS+' fixed';
 	document.body.style.backgroundSize = 'cover';
 }
 
@@ -135,6 +157,39 @@ function stepCellularAutomata(rule, curr, loop) {
 
 /********************
  * helper functions */
+//this function is stolen from http://stackoverflow.com/a/9138593/3152419
+//optimized signicantly though; 100%+ increase in performance
+function scaleImageData(imageData, scale) {
+	var scaled = ctx.createImageData(imageData.width * scale, 
+		imageData.height * scale
+	);
+	for(var row = 0; row < imageData.height; row++) {
+		var rts = row*scale;
+		var rtidwt4 = 4*row*imageData.width;
+		for(var colt4 = 0; colt4 < imageData.width*4; colt4+=4) {
+			var colt4ts = colt4*scale;
+			var rtidwt4pcolt4 = rtidwt4 + colt4;
+			var p1 = imageData.data[rtidwt4pcolt4 + 0];
+			var p2 = imageData.data[rtidwt4pcolt4 + 1];
+			var p3 = imageData.data[rtidwt4pcolt4 + 2];
+			var p4 = imageData.data[rtidwt4pcolt4 + 3];
+			for(var y = 0; y < scale; y++) {
+				var destRow = rts + y;
+				var drtswt4 = destRow*scaled.width*4;
+				for(var xt4 = 0; xt4 < scale*4; xt4+=4) {
+					var destCol = colt4ts + xt4;
+					var idx = drtswt4+destCol;
+					scaled.data[idx] = p1;
+					scaled.data[idx+1] = p2;
+					scaled.data[idx+2] = p3;
+					scaled.data[idx+3] = p4;
+				}
+			}
+		}
+	}
+	return scaled;
+}
+
 function centerString(str, len, fill) {
 	if (str.length == len) return str;
 	else if (str.length > len) {
@@ -147,7 +202,9 @@ function centerString(str, len, fill) {
 		for (var ai = 0; ai < Math.floor((len-str.length)/2); ai++) {
 			ret = fill + ret + fill;
 		}
-		if (ret.length < len) ret += '0'; //didn't add up perfect, fudge it by 1
+		if (ret.length < len) {
+			ret += '0'; //didn't add up perfect, fudge it by 1
+		}
 		return ret;
 	}
 }
@@ -165,6 +222,13 @@ function $(sel) { //ghetto jquery
 	if (sel.charAt(0) === '#') {
 		return document.getElementById(sel.substring(1));
 	} else return false;
+}
+
+//given an n in [d1, d2], return a linearly related number in [r1, r2]
+function map(n, d1, d2, r1, r2) {
+	var Rd = d2-d1;
+	var Rr = r2-r1;
+	return (Rr/Rd)*(n - d1) + r1;
 }
 
 function getRandString(alphabet, length) {
