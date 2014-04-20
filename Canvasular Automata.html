@@ -5,27 +5,44 @@
 		<title>Canvasular Automata</title>
 		<script src="js/canvasular.js"></script>
 		<style>
-		#rule {
-			width: 120px; 
-			margin-left: -60px; 
+		#info {
+			width: 200px; 
+			margin-left: -110px; 
 			left: 50%; 
-			height: 70px; 
-			margin-top: -35px; 
+			height: 84px; 
+			margin-top: -52px;
 			top: 50%; 
-			position: fixed; 
+			position: fixed;
+			padding: 10px;
 
 			background: white; 
 			border: 1px solid #CCC; 
 			border-radius: 3px; 
-
-			text-align: center; 
-			font-size: 1.5rem;
+			
+			font-size: 1rem;
 			font-family: Helvetica, serif;
-			line-height: 70px;
+		}
+		
+		#info #ca-width { width: 45%; }
+		#info #ca-height { width: 45%; }
+		#info #ca-rule { width: 96%; }
+		#info #ca-distance { width: 65%; }
+		#info #draw-btn { width: 29%; }
+		
+		input[type="text"] {
+			border-radius: 3px;
+			border: 1px solid #CCC;
+			padding: 3px;
 		}
 		</style>
 	</head>
 	<body>
-		<div id="rule"></div>	
+		<div id="info">
+			<input id="ca-width" type="text" placeholder="# columns">
+			<input id="ca-height" type="text" placeholder="# generations"><br>
+			<input id="ca-rule" type="text" placeholder="Rule (empty for a random one)"><br>
+			<input id="ca-distance" type="text" placeholder="Neighbor distance">
+			<input id="draw-btn" type="button" value="Draw">
+		</div>	
 	</body>
 </html>

@@ -9,18 +9,19 @@
 
 /**********
  * config */
-var d = new Date();
-var coolRules = [30, 57, 60, 73, 89, 90, 102, 105, 110, 124, 126, 150];
-var ruleIdx = Math.floor(
-	map(60*d.getMinutes()+d.getSeconds(), 0, 3599, 0, 314)
-)%coolRules.length; //~314 switches an hour
-
-var RULE = coolRules[ruleIdx];
+var NUM_NEIGHBORS = 1;
+var RULE;
+	var d = new Date();
+	var coolRules = [30, 57, 60, 73, 89, 90, 102, 105, 110, 124, 126, 150];
+	var ruleIdx = Math.floor(
+		map(60*d.getMinutes()+d.getSeconds(), 0, 3599, 0, 314)
+	)%coolRules.length; //~314 switches an hour
+	RULE = intToPaddedBinStr(coolRules[ruleIdx], Math.pow(2, 1+2*NUM_NEIGHBORS)); //2^(2m+1)
 var DES_HEIGHT = 87;
 var DES_WIDTH = Math.ceil((screen.width/screen.height)*DES_HEIGHT);
 var INIT_STATE = null;
-var ZERO_COLOR = 255;
-var ONE_COLOR = 233;
+var ZERO_COLOR = '#FFFFFF';
+var ONE_COLOR = '#E9E9E9';
 var VERT_POS = 'top';
 
 /*************
@@ -45,20 +46,34 @@ function initCanvasular() {
 	document.body.appendChild(canvas); //add it to the body
 	ctx = canvas.getContext('2d'); //get the context
 	
-	///////////////////
-	//report the rule//
-	if ($('#rule')) {
-		$('#rule').innerHTML = 'Rule ' + RULE;
-	}
-
-	///////////
-	//load up//
-	loadCABackground(DES_WIDTH, DES_HEIGHT);
-
-	console.log(((new Date().getTime())-start),'ms');
+	/////////////////////////////////////////////////
+	//load the backround when the button is clicked//
+	$('#draw-btn').addEventListener('click', function() {
+		//get the inputs or assign defaults
+		var width = parseInt($('#ca-width').value) || DES_WIDTH;
+		var height = parseInt($('#ca-height').value) || DES_HEIGHT;
+		var numNeighbors = parseInt($('#ca-distance').value) || NUM_NEIGHBORS;
+		var rule = $('#ca-rule').value || RULE;
+			if ($('#ca-distance').value && !$('#ca-rule').value) { //distance but no rule?
+				rule = getRandString('01', Math.pow(2, 1+2*numNeighbors)); //make a random one
+			}
+			
+		//fill in the empty ones
+		$('#ca-width').value = width;
+		$('#ca-height').value = height;
+		$('#ca-distance').value = numNeighbors;
+		$('#ca-rule').value = rule;
+		
+		//load the background and report out
+		var initRow = loadCABackground(width, height, numNeighbors, rule);
+		console.log(((new Date().getTime())-start)+'ms for the rule:\n'+
+					rule+'\n'+
+					'And inital state: \n'+
+					initRow);
+	});	
 }
 
-function loadCABackground(dw, dh) { //desired width and height of the image
+function loadCABackground(dw, dh, nn, rule) { //desired width and height of the CA, num neighbors, rule
 	////////////////
 	//set the size//
 	canvas.width = dw;
@@ -71,16 +86,17 @@ function loadCABackground(dw, dh) { //desired width and height of the image
 	if (INIT_STATE) {
 		firstRow = centerString(INIT_STATE, dw, '0');
 	} else {
-		firstRow = getRandString('0000100001', dw); //20% 0s, 80% 1s
+		firstRow = getRandString('0001100011', dw); //40% 0s, 60% 1s
 	}
 
 	//////////////////////////////////
 	//generate the cellular automata//
 	var ca = [firstRow];
+	var currentRow = firstRow;
 	for (var t = 0; t < dh; t++) {
 		if (t !== dh-1) {
-			firstRow = stepCellularAutomata(RULE, firstRow);
-			ca.push(firstRow);
+			currentRow = stepCellularAutomata(nn, rule, currentRow);
+			ca.push(currentRow);
 		}
 	}
 
@@ -91,9 +107,9 @@ function loadCABackground(dw, dh) { //desired width and height of the image
 		for (var x = 0; x < canvas.width; x++) {
 			var idx = 4*(canvas.width*y + x);
 			var color = (ca[y].charAt(x) === '0') ? ZERO_COLOR : ONE_COLOR; 
-			currImageData.data[idx+0] = color;
-			currImageData.data[idx+1] = color;
-			currImageData.data[idx+2] = color;
+			currImageData.data[idx+0] = parseInt(color.substring(1, 3), 16);
+			currImageData.data[idx+1] = parseInt(color.substring(3, 5), 16);
+			currImageData.data[idx+2] = parseInt(color.substring(5, 7), 16);
 			currImageData.data[idx+3] = 255;
 		}
 	}
@@ -111,14 +127,13 @@ function loadCABackground(dw, dh) { //desired width and height of the image
 	document.body.style.background = 'url('+image+
 		') no-repeat center '+VERT_POS+' fixed';
 	document.body.style.backgroundSize = 'cover';
+	
+	return firstRow; //return the first row
 }
 
-function stepCellularAutomata(rule, curr, loop) {
-	var MAGIC = 1; //how many to check, left and right
-
+function stepCellularAutomata(magic, rule, curr, loop) {
 	////////////////////////////
 	//deal with the parameters//
-	var strRule = intToPaddedBinStr(rule, Math.pow(2, 1+2*MAGIC)); //2^(2m+1) 
 	//how to treat boundaries: loop around or assume white?
 	loop = arguments.length === 3 ? loop : true; //default to looping around
 
@@ -127,26 +142,26 @@ function stepCellularAutomata(rule, curr, loop) {
 	var nextGen = '';
 	for (var ai = 0; ai < curr.length; ai++) { //for each point
 		var slidingWindow = ''; //look at the surrounding cells
-		if (ai-MAGIC < 0) { //the leftmost cells requires attention
-			for (var bi = 0; bi < MAGIC-ai; bi++) { //this many out of bounds
+		if (ai-magic < 0) { //the leftmost cells requires attention
+			for (var bi = 0; bi < magic-ai; bi++) { //this many out of bounds
 				slidingWindow += (loop) ? curr.charAt(curr.length-1) : 0;
 			}
 			//assume there's only an issue with the left end 
-			slidingWindow += curr.substring(0, ai+MAGIC+1);
-		} else if (ai+MAGIC >= curr.length) { //the rightmost need attn. too
+			slidingWindow += curr.substring(0, ai+magic+1);
+		} else if (ai+magic >= curr.length) { //the rightmost need attn. too
 			//assume there's only an issue with the right end 
-			slidingWindow += curr.substring(ai-MAGIC, curr.length);
-			for (var bi = 0; bi < 1+ai+MAGIC-curr.length; bi++) { //boundary
+			slidingWindow += curr.substring(ai-magic, curr.length);
+			for (var bi = 0; bi < 1+ai+magic-curr.length; bi++) { //boundary
 				slidingWindow += (loop) ? curr.charAt(curr.length-1) : 0;
 			}
 		} else { 
-			slidingWindow = curr.substring(ai-MAGIC, ai+MAGIC+1); 
+			slidingWindow = curr.substring(ai-magic, ai+magic+1); 
 		}
 		var x = parseInt(slidingWindow, 2); //numerical representation
 		//digits and strings are index differently, so 'reverse' the idx
-		var idxInStrRule = strRule.length-x-1;
+		var idxInStrRule = rule.length-x-1;
 		//if the pattern is in the rule (corresp. bit is 1)
-		if (strRule.charAt(idxInStrRule) === '1') {
+		if (rule.charAt(idxInStrRule) === '1') {
 			nextGen += '1'; //then the point is in
 		} else {
 			nextGen += '0'; //otherwise it's out
