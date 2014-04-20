@@ -35,8 +35,6 @@ var ctx;
 /******************
  * work functions */
 function initCanvasular() {
-	var start = new Date().getTime();
-
 	////////////////////
 	//assign variables//
 	canvas = document.createElement('canvas'); //make it
@@ -49,6 +47,8 @@ function initCanvasular() {
 	/////////////////////////////////////////////////
 	//load the backround when the button is clicked//
 	$s('#draw-btn').addEventListener('click', function() {
+		var start = new Date().getTime();
+		
 		//get the inputs or assign defaults
 		var width = parseInt($s('#ca-width').value) || DES_WIDTH;
 		var height = parseInt($s('#ca-height').value) || DES_HEIGHT;
@@ -283,9 +283,9 @@ function map(n, d1, d2, r1, r2) {
 }
 
 function getRandString(alphabet, length) {
-	if (length == 0) return '';
-	return alphabet.charAt(getRandInt(0, alphabet.length)) + 
-		   getRandString(alphabet, length-1);
+	var ret = '';
+	while (ret.length < length) ret += alphabet.charAt(getRandInt(0, alphabet.length));
+	return ret;
 } 
 
 function getRandInt(low, high) { //output is in [low, high)
