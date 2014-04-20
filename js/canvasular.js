@@ -18,7 +18,7 @@ var RULE;
 	)%coolRules.length; //~314 switches an hour
 	RULE = intToPaddedBinStr(coolRules[ruleIdx], Math.pow(2, 1+2*NUM_NEIGHBORS)); //2^(2m+1)
 var DES_HEIGHT = 87;
-var DES_WIDTH = Math.ceil((screen.width/screen.height)*DES_HEIGHT);
+var DES_WIDTH = Math.ceil((window.screen.width/window.screen.height)*DES_HEIGHT);
 var INIT_STATE = null;
 var ZERO_COLOR = '#FFFFFF';
 var ONE_COLOR = '#E9E9E9';
@@ -82,7 +82,7 @@ function loadCABackground(dw, dh, zc, oc, nn, rule) { //desired width and height
 	//set the size//
 	canvas.width = dw;
 	canvas.height = dh;
-	var scaleAmt = Math.floor((screen.width/dw+screen.height/dh)/2);
+	var scaleAmt = Math.floor((window.screen.width/dw+window.screen.height/dh)/2);
 
 	/////////////////////////////
 	//prepare the initial state//
@@ -130,7 +130,7 @@ function loadCABackground(dw, dh, zc, oc, nn, rule) { //desired width and height
 	var image = canvas.toDataURL();
 	document.body.style.background = 'url('+image+
 		') no-repeat center '+VERT_POS+' fixed';
-	document.body.style.backgroundSize = 'cover';
+	document.body.style.setProperty("background-size", "cover", "important");
 	$s('#img-link').innerHTML = '<a target="_blank" href="'+image+'">click here</a>';
 	
 	return firstRow; //return the first row
