@@ -48,32 +48,36 @@ function initCanvasular() {
 	
 	/////////////////////////////////////////////////
 	//load the backround when the button is clicked//
-	$('#draw-btn').addEventListener('click', function() {
+	$s('#draw-btn').addEventListener('click', function() {
 		//get the inputs or assign defaults
-		var width = parseInt($('#ca-width').value) || DES_WIDTH;
-		var height = parseInt($('#ca-height').value) || DES_HEIGHT;
-		var numNeighbors = parseInt($('#ca-distance').value) || NUM_NEIGHBORS;
-		var rule = $('#ca-rule').value || RULE;
-			if ($('#ca-distance').value && !$('#ca-rule').value) { //distance but no rule?
+		var width = parseInt($s('#ca-width').value) || DES_WIDTH;
+		var height = parseInt($s('#ca-height').value) || DES_HEIGHT;
+		var zeroColor = $s('#ca-0-color').value || ZERO_COLOR;
+		var oneColor = $s('#ca-1-color').value || ONE_COLOR;
+		var numNeighbors = parseInt($s('#ca-distance').value) || NUM_NEIGHBORS;
+		var rule = $s('#ca-rule').value || RULE;
+			if ($s('#ca-distance').value && !$s('#ca-rule').value) { //distance but no rule?
 				rule = getRandString('01', Math.pow(2, 1+2*numNeighbors)); //make a random one
 			}
 			
 		//fill in the empty ones
-		$('#ca-width').value = width;
-		$('#ca-height').value = height;
-		$('#ca-distance').value = numNeighbors;
-		$('#ca-rule').value = rule;
+		$s('#ca-width').value = width;
+		$s('#ca-height').value = height;
+		$s('#ca-0-color').value = zeroColor;
+		$s('#ca-1-color').value = oneColor;
+		$s('#ca-distance').value = numNeighbors;
+		$s('#ca-rule').value = rule;
 		
 		//load the background and report out
-		var initRow = loadCABackground(width, height, numNeighbors, rule);
+		var initRow = loadCABackground(width, height, zeroColor, oneColor, numNeighbors, rule);
 		console.log(((new Date().getTime())-start)+'ms for the rule:\n'+
-					'0x'+binStrToHexStr(rule)+'\n'+
+					numNeighbors+' | 0x'+binStrToHexStr(rule)+'\n'+
 					'And inital state: \n'+
 					initRow);
 	});	
 }
 
-function loadCABackground(dw, dh, nn, rule) { //desired width and height of the CA, num neighbors, rule
+function loadCABackground(dw, dh, zc, oc, nn, rule) { //desired width and height of the CA, num neighbors, rule
 	////////////////
 	//set the size//
 	canvas.width = dw;
@@ -106,7 +110,7 @@ function loadCABackground(dw, dh, nn, rule) { //desired width and height of the 
 	for (var y = 0; y < canvas.height; y++) {
 		for (var x = 0; x < canvas.width; x++) {
 			var idx = 4*(canvas.width*y + x);
-			var color = (ca[y].charAt(x) === '0') ? ZERO_COLOR : ONE_COLOR; 
+			var color = (ca[y].charAt(x) === '0') ? zc : oc; 
 			currImageData.data[idx+0] = parseInt(color.substring(1, 3), 16);
 			currImageData.data[idx+1] = parseInt(color.substring(3, 5), 16);
 			currImageData.data[idx+2] = parseInt(color.substring(5, 7), 16);
@@ -127,6 +131,7 @@ function loadCABackground(dw, dh, nn, rule) { //desired width and height of the 
 	document.body.style.background = 'url('+image+
 		') no-repeat center '+VERT_POS+' fixed';
 	document.body.style.backgroundSize = 'cover';
+	$s('#img-link').innerHTML = '<a target="_blank" href="'+image+'">click here</a>';
 	
 	return firstRow; //return the first row
 }
@@ -264,7 +269,7 @@ function intToPaddedBinStr(num, len) {
 	return ret.substring(ret.length-len, len); //least significant len digits
 }
 
-function $(sel) { //ghetto jquery
+function $s(sel) { //ghetto jquery
 	if (sel.charAt(0) === '#') {
 		return document.getElementById(sel.substring(1));
 	} else return false;

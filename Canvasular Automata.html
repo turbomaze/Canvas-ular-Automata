@@ -9,8 +9,8 @@
 			width: 200px; 
 			margin-left: -110px; 
 			left: 50%; 
-			height: 84px; 
-			margin-top: -52px;
+			height: 128px; 
+			margin-top: -79px;
 			top: 50%; 
 			position: fixed;
 			padding: 10px;
@@ -23,11 +23,10 @@
 			font-family: Helvetica, serif;
 		}
 		
-		#info #ca-width { width: 45%; }
-		#info #ca-height { width: 45%; }
-		#info #ca-rule { width: 96%; }
-		#info #ca-distance { width: 65%; }
-		#info #draw-btn { width: 29%; }
+		#ca-width, #ca-height, #ca-0-color, #ca-1-color { width: 45%; }
+		#ca-rule { width: 96%; }
+		#ca-distance { width: 65%; }
+		#draw-btn { width: 29%; }
 		
 		input[type="text"] {
 			border-radius: 3px;
@@ -40,9 +39,12 @@
 		<div id="info">
 			<input id="ca-width" type="text" placeholder="# columns">
 			<input id="ca-height" type="text" placeholder="# generations"><br>
+			<input id="ca-0-color" type="text" placeholder="Color #1">
+			<input id="ca-1-color" type="text" placeholder="Color $2"><br>
 			<input id="ca-rule" type="text" placeholder="Rule (empty for a random one)"><br>
 			<input id="ca-distance" type="text" placeholder="Neighbor distance">
-			<input id="draw-btn" type="button" value="Draw">
+			<input id="draw-btn" type="button" value="Draw"><br>
+			Image link: <span id="img-link">none</span>
 		</div>	
 	</body>
 </html>
