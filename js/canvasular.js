@@ -67,7 +67,7 @@ function initCanvasular() {
 		//load the background and report out
 		var initRow = loadCABackground(width, height, numNeighbors, rule);
 		console.log(((new Date().getTime())-start)+'ms for the rule:\n'+
-					rule+'\n'+
+					'0x'+binStrToHexStr(rule)+'\n'+
 					'And inital state: \n'+
 					initRow);
 	});	
@@ -222,6 +222,37 @@ function centerString(str, len, fill) {
 		}
 		return ret;
 	}
+}
+
+//from http://stackoverflow.com/questions/17204912/javascript-need-functions-to-convert-a-string-containing-binary-to-hex-then-co
+function binStrToHexStr(str) {
+	var ret = '';
+	for (var i=0; i < str.length; i+=4) {
+		//Grab a chunk of 4 bits
+		var bytes = str.substr(i, 4);
+		//Convert to decimal then hexadecimal
+		var decimal = parseInt(bytes, 2);
+		var hex = decimal.toString(16);
+		//Uppercase all the letters and append to ret
+		ret += hex.toUpperCase();
+	}
+	return ret;
+}
+
+//from http://stackoverflow.com/questions/17204912/javascript-need-functions-to-convert-a-string-containing-binary-to-hex-then-co
+function hexStrToBinStr(str) {
+	var ret = '';
+	//For each hexadecimal character
+	for (var i=0; i < str.length; i++) {
+		//Convert to decimal
+		var decimal = parseInt(str.charAt(i), 16);
+		//Convert to binary and add 0s onto the left as necessary to make up to 4 bits
+		var binary = decimal.toString(2);
+		while (binary.length < 4) binary = '0'+binary;
+		//Append to string         
+		ret += binary;
+	}
+	return ret;
 }
 
 function intToPaddedBinStr(num, len) {
