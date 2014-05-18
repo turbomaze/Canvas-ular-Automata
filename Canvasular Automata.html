@@ -4,9 +4,47 @@
 		<meta charset="UTF-8">
 		<title>Canvasular Automata</title>
 		<script src="js/canvasular.js"></script>
-		<link rel="stylesheet" href="css/reset.css">
+		<style>
+		#info {
+			width: 200px; 
+			margin-left: -110px; 
+			left: 50%; 
+			height: 128px; 
+			margin-top: -79px;
+			top: 50%; 
+			position: fixed;
+			padding: 10px;
+
+			background: white; 
+			border: 1px solid #CCC; 
+			border-radius: 3px; 
+			
+			font-size: 1rem;
+			font-family: Helvetica, serif;
+		}
+		
+		#ca-width, #ca-height, #ca-0-color, #ca-1-color { width: 45%; }
+		#ca-rule { width: 96%; }
+		#ca-distance { width: 65%; }
+		#draw-btn { width: 29%; }
+		
+		input[type="text"] {
+			border-radius: 3px;
+			border: 1px solid #CCC;
+			padding: 3px;
+		}
+		</style>
 	</head>
 	<body>
-		<canvas id="canvas" width="1" height="1" style="display: none"></canvas>
+		<div id="info">
+			<input id="ca-width" type="text" placeholder="# columns">
+			<input id="ca-height" type="text" placeholder="# generations"><br>
+			<input id="ca-0-color" type="text" placeholder="Color #1">
+			<input id="ca-1-color" type="text" placeholder="Color $2"><br>
+			<input id="ca-rule" type="text" placeholder="Rule (empty for a random one)"><br>
+			<input id="ca-distance" type="text" placeholder="Neighbor distance">
+			<input id="draw-btn" type="button" value="Draw"><br>
+			Image link: <span id="img-link">none</span>
+		</div>	
 	</body>
 </html>
